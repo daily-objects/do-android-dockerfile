@@ -1,5 +1,10 @@
 FROM ubuntu:16.04
 
+# Sets language to UTF8 : this works in pretty much all cases
+
+ENV LANG en_US.UTF-8
+RUN locale-gen $LANG
+ENV DOCKER_ANDROID_LANG en_US
 ENV DOCKER_ANDROID_DISPLAY_NAME mobileci-docker
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -59,7 +64,6 @@ ENV ANDROID_COMPONENTS platform-tools,android-26,build-tools-26.0.1
 # Install Android tools
 RUN echo y | /usr/local/android-sdk/tools/android update sdk --filter "${ANDROID_COMPONENTS}" --no-ui -a
 
-
 ENV ANDROID_HOME /usr/local/android-sdk
 ENV ANDROID_SDK_HOME $ANDROID_HOME
 ENV JENKINS_HOME $HOME
@@ -90,4 +94,5 @@ ENV PROJECT /project
 RUN mkdir $PROJECT
 RUN chown -R $RUN_USER:$RUN_USER $PROJECT
 WORKDIR $PROJECT
-USER $RUN_USER RUN echo "sdk.dir=$ANDROID_HOME" > local.properties
+USER $RUN_USER
+RUN echo "sdk.dir=$ANDROID_HOME" > local.properties
