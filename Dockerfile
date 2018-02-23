@@ -54,18 +54,21 @@ RUN wget https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
 RUN tar -xvzf android-sdk_r24.4.1-linux.tgz
 RUN mv android-sdk-linux /usr/local/android-sdk
 RUN rm android-sdk_r24.4.1-linux.tgz
-ENV ANDROID_COMPONENTS platform-tools,android-26,build-tools-26.0.1
+
+ARG BUILD_TOOLS_VERSION=27.0.3
+ARG TARGET_SDK=27
+
+ENV ANDROID_COMPONENTS platform-tools,android-${TARGET_SDK},build-tools-${BUILD_TOOLS_VERSION}
 
 # Install Android tools
 RUN echo y | /usr/local/android-sdk/tools/android update sdk --filter "${ANDROID_COMPONENTS}" --no-ui -a
 
 ENV ANDROID_HOME /usr/local/android-sdk
 ENV ANDROID_SDK_HOME $ANDROID_HOME
-ENV JENKINS_HOME $HOME
 ENV PATH ${INFER_HOME}/bin:${PATH}
 ENV PATH $PATH:$ANDROID_SDK_HOME/tools
 ENV PATH $PATH:$ANDROID_SDK_HOME/platform-tools
-ENV PATH $PATH:$ANDROID_SDK_HOME/build-tools/26.0.1
+ENV PATH $PATH:$ANDROID_SDK_HOME/build-tools/${BUILD_TOOLS_VERSION}
 
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 
