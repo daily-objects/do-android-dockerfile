@@ -48,12 +48,10 @@ RUN apt-get -y install openjdk-8-jdk
 RUN rm -rf /var/lib/apt/lists/*
 RUN apt-get clean
 
-
 # Install Android SDK
-RUN wget https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
-RUN tar -xvzf android-sdk_r24.4.1-linux.tgz
-RUN mv android-sdk-linux /usr/local/android-sdk
-RUN rm android-sdk_r24.4.1-linux.tgz
+RUN wget https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip
+RUN unzip -qq sdk-tools-linux-3859397.zip
+RUN mkdir --parents /usr/local/android-sdk;mv tools /usr/local/android-sdk
 
 ARG BUILD_TOOLS_VERSION=27.0.3
 ARG TARGET_SDK=27
@@ -61,14 +59,14 @@ ARG TARGET_SDK=27
 ENV ANDROID_COMPONENTS platform-tools,android-${TARGET_SDK},build-tools-${BUILD_TOOLS_VERSION}
 
 # Install Android tools
-RUN echo y | /usr/local/android-sdk/tools/android update sdk --filter "${ANDROID_COMPONENTS}" --no-ui -a
-
 ENV ANDROID_HOME /usr/local/android-sdk
 ENV ANDROID_SDK_HOME $ANDROID_HOME
 ENV PATH ${INFER_HOME}/bin:${PATH}
 ENV PATH $PATH:$ANDROID_SDK_HOME/tools
 ENV PATH $PATH:$ANDROID_SDK_HOME/platform-tools
 ENV PATH $PATH:$ANDROID_SDK_HOME/build-tools/${BUILD_TOOLS_VERSION}
+RUN yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+RUN yes | $ANDROID_HOME/tools/bin/sdkmanager --update
 
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
 
