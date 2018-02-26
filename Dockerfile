@@ -26,10 +26,10 @@ ENV PATH="${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${PATH}"
 
 # AVD CREATION system-images;android-27;google_apis;x86
 
-ENV ABI="x86" \
-    TARGET="android-27" \
+ENV ABI="x86_64" \
+    TARGET="android-25" \
     TAG="google_apis" \
-    NAME="do_avd"
+    NAME="Docker"
 
 RUN mkdir -p ~/.android \
  && touch ~/.android/repositories.cfg \
