@@ -1,94 +1,43 @@
-FROM ubuntu:16.04
+FROM openjdk:8
 
-ENV DOCKER_ANDROID_DISPLAY_NAME mobileci-docker
+# Install Git and dependencies
+RUN dpkg --add-architecture i386 \
+ && apt-get update \
+ && apt-get install -y file git curl zip libncurses5:i386 libstdc++6:i386 zlib1g:i386 libqt5widgets5
 
-ENV DEBIAN_FRONTEND noninteractive
+# Set up environment variables
+ENV ANDROID_HOME="/home/user/android-sdk-linux" \
+    SDK_URL="https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip"
 
-RUN rm -rf /var/lib/apt/lists/*
-RUN apt-get update
-RUN apt-get dist-upgrade -y
+# Create a non-root user
+RUN useradd -m user
+USER user
+WORKDIR /home/user
 
-RUN apt-get install -y \
-  autoconf \
-  build-essential \
-  bzip2 \
-  curl \
-  gcc \
-  git \
-  groff \
-  lib32stdc++6 \
-  lib32z1 \
-  lib32z1-dev \
-  lib32ncurses5 \
-  libc6-dev \
-  libgmp-dev \
-  libmpc-dev \
-  libmpfr-dev \
-  libxslt-dev \
-  libxml2-dev \
-  m4 \
-  make \
-  ncurses-dev \
-  ocaml \
-  openssh-client \
-  pkg-config \
-  python-software-properties \
-  rsync \
-  software-properties-common \
-  unzip \
-  wget \
-  zip \
-  zlib1g-dev \
-  --no-install-recommends
+# Download Android SDK
+RUN mkdir "$ANDROID_HOME" .android \
+ && cd "$ANDROID_HOME" \
+ && curl -o sdk.zip $SDK_URL \
+ && unzip sdk.zip \
+ && rm sdk.zip \
+ && yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
 
-RUN apt-add-repository ppa:openjdk-r/ppa
-RUN apt-get update
-RUN apt-get -y install openjdk-8-jdk
+ENV PATH="${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${PATH}"
 
-RUN rm -rf /var/lib/apt/lists/*
-RUN apt-get clean
+# AVD CREATION system-images;android-27;google_apis;x86
 
-# Install Android SDK
-RUN wget https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip
-RUN unzip -qq sdk-tools-linux-3859397.zip
-RUN mkdir --parents /usr/local/android-sdk;mv tools /usr/local/android-sdk
+ENV ABI="x86" \
+    TARGET="android-27" \
+    TAG="google_apis" \
+    NAME="do_avd"
 
-ARG BUILD_TOOLS_VERSION=27.0.3
-ARG TARGET_SDK=27
+RUN mkdir -p ~/.android \
+ && touch ~/.android/repositories.cfg \
+ && $ANDROID_HOME/tools/bin/sdkmanager \
+        "tools" \
+        "platforms;${TARGET}" \
+        "system-images;${TARGET};${TAG};${ABI}"
 
-ENV ANDROID_COMPONENTS platform-tools,android-${TARGET_SDK},build-tools-${BUILD_TOOLS_VERSION}
-
-# Install Android tools
-ENV ANDROID_HOME /usr/local/android-sdk
-ENV ANDROID_SDK_HOME $ANDROID_HOME
-ENV PATH ${INFER_HOME}/bin:${PATH}
-ENV PATH $PATH:$ANDROID_SDK_HOME/tools
-ENV PATH $PATH:$ANDROID_SDK_HOME/platform-tools
-ENV PATH $PATH:$ANDROID_SDK_HOME/build-tools/${BUILD_TOOLS_VERSION}
-RUN yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
-RUN yes | $ANDROID_HOME/tools/bin/sdkmanager --update
-
-ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
-
-ENV TERM dumb
-ENV JAVA_OPTS "-Xms512m -Xmx1024m"
-ENV GRADLE_OPTS "-XX:+UseG1GC -XX:MaxGCPauseMillis=1000"
-
-RUN apt-get clean
-ENV RUN_USER mobileci
-ENV RUN_UID 5089
-RUN id $RUN_USER || adduser --uid "$RUN_UID" \
-    --gecos 'Build User' \
-    --shell '/bin/sh' \
-    --disabled-login \
-    --disabled-password "$RUN_USER"
-
-RUN chown -R $RUN_USER:$RUN_USER $ANDROID_HOME $ANDROID_SDK_HOME
-RUN chmod -R a+rx $ANDROID_HOME $ANDROID_SDK_HOME
-
-ENV PROJECT /project
-RUN mkdir $PROJECT
-RUN chown -R $RUN_USER:$RUN_USER $PROJECT
-WORKDIR $PROJECT
-USER $RUN_USER
-RUN echo "sdk.dir=$ANDROID_HOME" > local.properties
+RUN echo n | $ANDROID_HOME/tools/bin/avdmanager create avd \
+    -k "system-images;${TARGET};${TAG};${ABI}" \
+-n ${NAME} -b ${ABI} -g ${TAG}
