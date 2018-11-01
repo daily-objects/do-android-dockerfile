@@ -23,7 +23,7 @@ RUN mkdir "$ANDROID_HOME" .android \
  && yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
 
 ENV PATH="${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${PATH}"
-ENV TARGET="android-27"
+ENV TARGET="android-28"
 
 RUN mkdir -p ~/.android \
  && touch ~/.android/repositories.cfg \
